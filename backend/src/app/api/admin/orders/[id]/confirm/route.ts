@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { verifyAdmin } from "@/lib/auth";
 import { calculatePrice, ServiceType } from "@/lib/pricing";
+import { Prisma } from "@prisma/client";
 
 export async function PATCH(
   req: Request,
@@ -50,7 +51,8 @@ export async function PATCH(
     weight
   );
   // UPDATE ORDER DAN TAMBAH TRACKING DENGAN TRANSAKSI
-  const updatedOrder = await prisma.$transaction(async (tx) => {
+ const updatedOrder = await prisma.$transaction(
+  async (tx: Prisma.TransactionClient) => {
     const updated = await tx.order.update({
       where: { id },
       data: {
@@ -68,8 +70,8 @@ export async function PATCH(
     });
 
     return updated;
-  });
-
+  }
+);
   // RESPONSE
   return NextResponse.json(
     { message: "Order berhasil dikonfirmasi", order: updatedOrder },
