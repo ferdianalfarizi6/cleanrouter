@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "next/router";
 import { motion } from "framer-motion";
 import { Truck, Scale, DollarSign, MapPin, Phone, User, Package } from "lucide-react";
 import clsx from "clsx";
