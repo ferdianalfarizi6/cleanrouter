@@ -1,0 +1,69 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  password  String
+  createdAt DateTime @default(now())
+}
+
+model Order {
+  id          Int      @id @default(autoincrement())
+  name        String
+  phone       String
+  address     String
+  serviceType String
+  weight      Float?          
+  totalPrice  Int
+  isPaid      Boolean  @default(false)
+  status      String   @default("CREATED") 
+  createdAt   DateTime @default(now())
+
+  userId      Int?
+  user        User?    @relation(fields: [userId], references: [id])
+
+  tracking    Tracking[]
+}
+
+model Tracking {
+  id        Int      @id @default(autoincrement())
+  status    String   // diterima, dicuci, dikeringkan, siap-ambil, selesai
+  timestamp DateTime @default(now())
+
+  order     Order    @relation(fields: [orderId], references: [id])
+  orderId   Int
+}
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  resetToken      String?
+  resetTokenExp   DateTime?
+  createdAt DateTime @default(now())
+
+  orders Order[]
+}
+
+enum ServiceType {
+  REGULER
+  EXPRESS
+}
+
+model Package {
+  id          String      @id @default(cuid())
+  label       String
+  price       Int         @default(0)
+  serviceType ServiceType
+  createdAt   DateTime    @default(now())
+}
