@@ -8,6 +8,17 @@ import jwt from "jsonwebtoken";
 
 export const dynamic = 'force-dynamic';
 
+export async function OPTIONS() {
+  return NextResponse.json({}, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    }
+  });
+}
+
 export async function POST(req: Request) {
   try {
     console.log("LOGIN ADMIN HIT");
@@ -56,19 +67,21 @@ export async function POST(req: Request) {
     );
   } catch (error: any) {
     console.error("ADMIN LOGIN ERROR:", error);
-    // DEBUG: Check for missing env vars
-    const debugInfo = {
-      hasJwt: !!process.env.JWT_SECRET,
-      hasDbUrl: !!process.env.DATABASE_URL,
-      errorMsg: error?.message || String(error),
-      stack: error?.stack
-    };
-    console.error("DEBUG INFO:", debugInfo);
+
+    // DEBUG: Inspect the actual env var seen by the code
+    const dbUrl = process.env.DATABASE_URL || "UNDEFINED";
+    // Show first 20 chars to identify if there are quotes like '"postgresql://...'
+    const maskedDbUrl = dbUrl === "UNDEFINED" ? dbUrl : dbUrl.substring(0, 20) + "...";
 
     return NextResponse.json(
       {
-        message: "Internal server error (DEBUG MODE)",
-        debug: debugInfo
+        message: "Internal server error (DEBUG V2 - CHECKING ENV)",
+        debug: {
+          errorMsg: error.message || String(error),
+          // This is critical: tells us strictly what string node.js received
+          seenDbUrlStart: maskedDbUrl,
+          envVarLength: dbUrl.length
+        }
       },
       { status: 500 }
     );
