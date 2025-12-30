@@ -3,6 +3,8 @@ import { prisma } from "@/lib/db";
 import { ServiceType } from "@prisma/client";
 import { verifyAdmin } from "@/lib/auth"; // Assume verifyAdmin is exported from lib/auth
 
+export const dynamic = 'force-dynamic';
+
 // Public GET for packages
 export async function GET() {
     try {

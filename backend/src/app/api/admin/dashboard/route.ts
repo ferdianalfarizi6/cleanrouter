@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db"; // Use singleton
 import { verifyAdmin } from "@/lib/auth";
+
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: Request) {
   //  ADMIN AUTH
   const admin = verifyAdmin(req);
