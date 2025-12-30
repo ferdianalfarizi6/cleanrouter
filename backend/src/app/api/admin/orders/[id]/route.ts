@@ -48,11 +48,11 @@ export async function PATCH(
 
         // Transaction: Update Order & Add Tracking History
         const result = await prisma.$transaction(
-  async (tx: Prisma.TransactionClient) => {
-    const updateData: Prisma.OrderUpdateInput = {};
+            async (tx: Prisma.TransactionClient) => {
+                const updateData: Prisma.OrderUpdateInput = {};
 
-    if (status) updateData.status = status;
-    if (typeof isPaid === "boolean") updateData.isPaid = isPaid;
+                if (status) updateData.status = status;
+                if (typeof isPaid === "boolean") updateData.isPaid = isPaid;
 
     // If status is COMPLETED, force paid
     if (status === "COMPLETED") {
