@@ -4,6 +4,8 @@ import { verifyAdmin } from "@/lib/auth";
 import { calculatePrice, ServiceType } from "@/lib/pricing";
 import { Prisma } from "@prisma/client";
 
+export const dynamic = 'force-dynamic';
+
 export async function PATCH(
   req: Request,
   { params }: { params: { id: string } }
@@ -51,27 +53,27 @@ export async function PATCH(
     weight
   );
   // UPDATE ORDER DAN TAMBAH TRACKING DENGAN TRANSAKSI
- const updatedOrder = await prisma.$transaction(
-  async (tx: Prisma.TransactionClient) => {
-    const updated = await tx.order.update({
-      where: { id },
-      data: {
-        weight,
-        totalPrice,
-        status: "CONFIRMED",
-      },
-    });
+  const updatedOrder = await prisma.$transaction(
+    async (tx: Prisma.TransactionClient) => {
+      const updated = await tx.order.update({
+        where: { id },
+        data: {
+          weight,
+          totalPrice,
+          status: "CONFIRMED",
+        },
+      });
 
-    await tx.tracking.create({
-      data: {
-        orderId: id,
-        status: "CONFIRMED",
-      },
-    });
+      await tx.tracking.create({
+        data: {
+          orderId: id,
+          status: "CONFIRMED",
+        },
+      });
 
-    return updated;
-  }
-);
+      return updated;
+    }
+  );
   // RESPONSE
   return NextResponse.json(
     { message: "Order berhasil dikonfirmasi", order: updatedOrder },
