@@ -3,7 +3,9 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { verifyAdmin } from "@/lib/auth";
 
+// =======================
 // GET Detail Order
+// =======================
 export async function GET(
   req: Request,
   { params }: { params: { id: string } }
@@ -14,6 +16,10 @@ export async function GET(
   }
 
   const id = Number(params.id);
+  if (Number.isNaN(id)) {
+    return NextResponse.json({ message: "Invalid order id" }, { status: 400 });
+  }
+
   const order = await prisma.order.findUnique({
     where: { id },
     include: {
@@ -31,7 +37,9 @@ export async function GET(
   return NextResponse.json({ order }, { status: 200 });
 }
 
+// =======================
 // PATCH Update Status
+// =======================
 export async function PATCH(
   req: Request,
   { params }: { params: { id: string } }
@@ -43,6 +51,10 @@ export async function PATCH(
 
   try {
     const id = Number(params.id);
+    if (Number.isNaN(id)) {
+      return NextResponse.json({ message: "Invalid order id" }, { status: 400 });
+    }
+
     const body = (await req.json()) as {
       status?: string;
       isPaid?: boolean;
@@ -50,38 +62,40 @@ export async function PATCH(
 
     const { status, isPaid } = body;
 
-   const result = await prisma.$transaction(
-  async (tx: Prisma.TransactionClient) => {
-    const updateData: {
-      status?: string;
-      isPaid?: boolean;
-    } = {};
+    const result = await prisma.$transaction(
+      async (tx: Prisma.TransactionClient) => {
+        // ✅ EXPLICIT DTO (AMAN VERCEL)
+        const updateData: {
+          status?: string;
+          isPaid?: boolean;
+        } = {};
 
-    if (status) updateData.status = status;
-    if (typeof isPaid === "boolean") updateData.isPaid = isPaid;
+        if (status) updateData.status = status;
+        if (typeof isPaid === "boolean") updateData.isPaid = isPaid;
 
-    if (status === "COMPLETED") {
-      updateData.isPaid = true;
-    }
+        // Business rule: COMPLETED = paid
+        if (status === "COMPLETED") {
+          updateData.isPaid = true;
+        }
 
-    const updatedOrder = await tx.order.update({
-      where: { id },
-      data: updateData,
-    });
+        const updatedOrder = await tx.order.update({
+          where: { id },
+          data: updateData,
+        });
 
-    if (status) {
-      await tx.tracking.create({
-        data: {
-          orderId: id,
-          status,
-        },
-      });
-    }
+        // Add tracking only if status changed
+        if (status) {
+          await tx.tracking.create({
+            data: {
+              orderId: id,
+              status,
+            },
+          });
+        }
 
-    return updatedOrder;
-  }
-);
-
+        return updatedOrder;
+      }
+    );
 
     return NextResponse.json(
       { message: "Status updated", order: result },
