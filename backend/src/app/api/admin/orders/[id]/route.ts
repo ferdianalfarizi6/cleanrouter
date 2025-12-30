@@ -47,34 +47,37 @@ export async function PATCH(
         const { status, isPaid } = body;
 
         // Transaction: Update Order & Add Tracking History
-        const result = await prisma.$transaction(async (tx) => {
-            const updateData: any = {};
+        const result = await prisma.$transaction(
+  async (tx: Prisma.TransactionClient) => {
+    const updateData: Prisma.OrderUpdateInput = {};
 
-            if (status) updateData.status = status;
-            if (typeof isPaid === "boolean") updateData.isPaid = isPaid;
+    if (status) updateData.status = status;
+    if (typeof isPaid === "boolean") updateData.isPaid = isPaid;
 
-            // If status is COMPLETED, force paid
-            if (status === "COMPLETED") {
-                updateData.isPaid = true;
-            }
+    // If status is COMPLETED, force paid
+    if (status === "COMPLETED") {
+      updateData.isPaid = true;
+    }
 
-            const updatedOrder = await tx.order.update({
-                where: { id },
-                data: updateData
-            });
+    const updatedOrder = await tx.order.update({
+      where: { id },
+      data: updateData,
+    });
 
-            // Only add tracking if status changed
-            if (status) {
-                await tx.tracking.create({
-                    data: {
-                        orderId: id,
-                        status: status
-                    }
-                });
-            }
+    // Only add tracking if status changed
+    if (status) {
+      await tx.tracking.create({
+        data: {
+          orderId: id,
+          status: status,
+        },
+      });
+    }
 
-            return updatedOrder;
-        });
+    return updatedOrder;
+  }
+);
+
 
         return NextResponse.json({ message: "Status updated", order: result }, { status: 200 });
 
