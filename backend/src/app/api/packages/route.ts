@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { ServiceType } from "@prisma/client";
 import { verifyAdmin } from "@/lib/auth"; // Assume verifyAdmin is exported from lib/auth
 
 // Public GET for packages
@@ -23,7 +24,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ message: "Unauthorized Admin" }, { status: 401 });
         }
 
-        const data = await req.json();
+        const data = await req.json() as { label: string; serviceType: ServiceType; price: number };
         const { label, serviceType, price } = data;
 
         if (!label || !serviceType || price === undefined) {
@@ -33,7 +34,7 @@ export async function POST(req: Request) {
         const newPkg = await prisma.package.create({
             data: {
                 label,
-                serviceType,
+                serviceType: serviceType,
                 price: Number(price)
             }
         });
