@@ -3,6 +3,8 @@ import { Prisma, ServiceType } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { verifyAdmin } from "@/lib/auth";
 
+export const dynamic = 'force-dynamic';
+
 type Params = {
   params: { id: string };
 };

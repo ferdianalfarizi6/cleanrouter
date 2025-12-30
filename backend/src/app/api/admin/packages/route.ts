@@ -3,6 +3,8 @@ import { Prisma, Package } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { verifyAdmin } from "@/lib/auth";
 
+export const dynamic = 'force-dynamic';
+
 //post
 export async function POST(req: Request) {
   const user = verifyAdmin(req as any);
