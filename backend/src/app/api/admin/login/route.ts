@@ -54,10 +54,22 @@ export async function POST(req: Request) {
       { message: "Login berhasil", token },
       { status: 200 }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("ADMIN LOGIN ERROR:", error);
+    // DEBUG: Check for missing env vars
+    const debugInfo = {
+      hasJwt: !!process.env.JWT_SECRET,
+      hasDbUrl: !!process.env.DATABASE_URL,
+      errorMsg: error?.message || String(error),
+      stack: error?.stack
+    };
+    console.error("DEBUG INFO:", debugInfo);
+
     return NextResponse.json(
-      { message: "Internal server error" },
+      {
+        message: "Internal server error (DEBUG MODE)",
+        debug: debugInfo
+      },
       { status: 500 }
     );
   }
