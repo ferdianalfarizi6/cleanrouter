@@ -42,7 +42,7 @@ export async function PATCH(
 
     try {
         const id = Number(params.id);
-        const body = await req.json();
+        const body = await req.json() as { status?: string; isPaid?: boolean };
         const { status, isPaid } = body;
 
         // Transaction: Update Order & Add Tracking History
