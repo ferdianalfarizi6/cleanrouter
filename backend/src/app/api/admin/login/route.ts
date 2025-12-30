@@ -10,6 +10,7 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
   try {
+    console.log("LOGIN ADMIN HIT");
     const body = await req.json();
     const { username, password } = body as { username: string; password: string };
 
