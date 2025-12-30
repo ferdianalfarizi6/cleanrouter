@@ -50,39 +50,38 @@ export async function PATCH(
 
     const { status, isPaid } = body;
 
-    const result = await prisma.$transaction(
-      async (tx: Prisma.TransactionClient) => {
-        // ✅ TYPE YANG AMAN & STABIL
-        const updateData: Parameters<
-          typeof tx.order.update
-        >[0]["data"] = {};
+   const result = await prisma.$transaction(
+  async (tx: Prisma.TransactionClient) => {
+    const updateData: {
+      status?: string;
+      isPaid?: boolean;
+    } = {};
 
-        if (status) updateData.status = status;
-        if (typeof isPaid === "boolean") updateData.isPaid = isPaid;
+    if (status) updateData.status = status;
+    if (typeof isPaid === "boolean") updateData.isPaid = isPaid;
 
-        // If status is COMPLETED, force paid
-        if (status === "COMPLETED") {
-          updateData.isPaid = true;
-        }
+    if (status === "COMPLETED") {
+      updateData.isPaid = true;
+    }
 
-        const updatedOrder = await tx.order.update({
-          where: { id },
-          data: updateData,
-        });
+    const updatedOrder = await tx.order.update({
+      where: { id },
+      data: updateData,
+    });
 
-        // Only add tracking if status changed
-        if (status) {
-          await tx.tracking.create({
-            data: {
-              orderId: id,
-              status,
-            },
-          });
-        }
+    if (status) {
+      await tx.tracking.create({
+        data: {
+          orderId: id,
+          status,
+        },
+      });
+    }
 
-        return updatedOrder;
-      }
-    );
+    return updatedOrder;
+  }
+);
+
 
     return NextResponse.json(
       { message: "Status updated", order: result },
