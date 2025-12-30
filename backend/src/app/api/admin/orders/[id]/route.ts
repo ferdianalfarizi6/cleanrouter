@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
-import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { verifyAdmin } from "@/lib/auth";
 
-// =======================
-// GET Detail Order
-// =======================
+/**
+ * =========================
+ * GET: Detail Order
+ * =========================
+ */
 export async function GET(
   req: Request,
   { params }: { params: { id: string } }
@@ -16,7 +17,7 @@ export async function GET(
   }
 
   const id = Number(params.id);
-  if (Number.isNaN(id)) {
+  if (isNaN(id)) {
     return NextResponse.json({ message: "Invalid order id" }, { status: 400 });
   }
 
@@ -37,9 +38,11 @@ export async function GET(
   return NextResponse.json({ order }, { status: 200 });
 }
 
-// =======================
-// PATCH Update Status
-// =======================
+/**
+ * =========================
+ * PATCH: Update Status Order
+ * =========================
+ */
 export async function PATCH(
   req: Request,
   { params }: { params: { id: string } }
@@ -49,60 +52,59 @@ export async function PATCH(
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
-  try {
-    const id = Number(params.id);
-    if (Number.isNaN(id)) {
-      return NextResponse.json({ message: "Invalid order id" }, { status: 400 });
-    }
+  const id = Number(params.id);
+  if (isNaN(id)) {
+    return NextResponse.json({ message: "Invalid order id" }, { status: 400 });
+  }
 
+  try {
     const body = (await req.json()) as {
       status?: string;
       isPaid?: boolean;
     };
 
-    const { status, isPaid } = body;
+    const updateData: { status?: string; isPaid?: boolean } = {};
 
-    const result = await prisma.$transaction(
-      async (tx: Prisma.TransactionClient) => {
-        // ✅ EXPLICIT DTO (AMAN VERCEL)
-        const updateData: {
-          status?: string;
-          isPaid?: boolean;
-        } = {};
+    if (body.status) {
+      updateData.status = body.status;
+    }
 
-        if (status) updateData.status = status;
-        if (typeof isPaid === "boolean") updateData.isPaid = isPaid;
+    if (typeof body.isPaid === "boolean") {
+      updateData.isPaid = body.isPaid;
+    }
 
-        // Business rule: COMPLETED = paid
-        if (status === "COMPLETED") {
-          updateData.isPaid = true;
-        }
+    // Force paid when completed
+    if (body.status === "COMPLETED") {
+      updateData.isPaid = true;
+    }
 
-        const updatedOrder = await tx.order.update({
-          where: { id },
-          data: updateData,
+    const result = await prisma.$transaction(async (tx) => {
+      const order = await tx.order.update({
+        where: { id },
+        data: updateData,
+      });
+
+      if (body.status) {
+        await tx.tracking.create({
+          data: {
+            orderId: id,
+            status: body.status,
+          },
         });
-
-        // Add tracking only if status changed
-        if (status) {
-          await tx.tracking.create({
-            data: {
-              orderId: id,
-              status,
-            },
-          });
-        }
-
-        return updatedOrder;
       }
-    );
+
+      return order;
+    });
 
     return NextResponse.json(
-      { message: "Status updated", order: result },
+      { message: "Order updated", order: result },
       { status: 200 }
     );
-  } catch (err) {
-    console.error(err);
-    return NextResponse.json({ message: "Internal Error" }, { status: 500 });
+  } catch (error) {
+    console.error("PATCH order error:", error);
+    return NextResponse.json(
+      { message: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
