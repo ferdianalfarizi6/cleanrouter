@@ -1,5 +1,5 @@
 // FORCE LOCALHOST 3000 for Debugging
-export const API_URL = "http://127.0.0.1:3000";
+export const API_URL = "https://cleanrouter.vercel.app/api";
 
 console.log("[API] Configured URL:", API_URL);
 
